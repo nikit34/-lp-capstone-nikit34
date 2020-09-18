@@ -35,9 +35,9 @@ def menu():
     print("2 show all occurrences by NAME       [values]")
     print("3 show all occurrences by CONTENT    [values]")
     print("4 start proc search direct parents   [values]")
-    while True:
+    while 1:
         act = input('input: ')
-        if next(filter(lambda x: x not in ['1', '2', '3'], act), False):
+        if next(filter(lambda x: x not in ['1', '2', '3', '4'], act), False):
             print("Invalid input")
         else:
             print(f"{act} - OK")
@@ -51,7 +51,7 @@ def show_by_time(file_lines, *args, **kwargs):
     near_year = 0
     old_year = 0
     count = -1
-    while True:
+    while 1:
         print("  enter time interval\n  in follow format\n  [one year / 4 symb] [second year / 4 symb] [count or 'all']")
         interval = input().split()
         if len(interval) > 1:
@@ -110,11 +110,68 @@ def show_contains_name(file_lines, *args, **kwargs):
     print("-------------------------------------------------------------")
 
 
-# @open_close_file(fin=('Ragusan.ged', 'r'), fout=('prolog.pl', 'w'))
-# def run_proc_prolog(file_lines, *args, **kwargs):
-#     for i, line in enumerate(file_lines):
-#         split_line = line.split(' ', 2)
-#         if split_line[1] == 'NAME'
+@open_close_file(fin=('kennedy.ged', 'r'), fout=('prolog.pl', 'w'))
+def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
+    f_prolog.write("parent(X,Y) :- parents(Y,X,_).\n")
+    f_prolog.write("parent(X,Y) :- parents(Y,_,X).\n")
+    f_prolog.write("\n")
+    f_prolog.write("father(X, Y) :- parents(Y, X, _).\n")
+    f_prolog.write("mother(X, Y) :- parents(Y, _, X).\n")
+    f_prolog.write("\n")
+    f_prolog.write("male(X) :- father(X, _).\n")
+    f_prolog.write("female(X) :- mother(X, _).\n")
+    f_prolog.write("\n")
+    f_prolog.write("grandfather(X, Y) :- father(X, Z), father(Z, Y).\n")
+    f_prolog.write("grandfather(X, Y) :- father(X, Z), mother(Z, Y).\n")
+    f_prolog.write("\n")
+    f_prolog.write("grandmother(X, Y) :- mother(X, Z), mother(Z, Y).\n")
+    f_prolog.write("grandmother(X, Y) :- mother(X, Z), father(Z, Y).\n")
+    f_prolog.write("\n")
+    f_prolog.write("brother(X, Y) :- male(X), father(Z, X), father(Z, Y), X \= Y.\n")
+    f_prolog.write("sister(X, Y) :- female(X), father(Z, X), father(Z, Y), X \= Y.\n")
+    f_prolog.write("\n")
+    f_prolog.write("aunt(X,Y) :- sister(X,Z), parent(Z,Y).\n")
+    f_prolog.write("uncle(X, Y) :- brother(X, Z), parent(Z,Y).\n")
+    unit = {}
+    units = {}
+    border = 0
+    for i, line in enumerate(file_lines, start=1):
+        split_line = [x.strip() for x in line.split(' ', 2)]
+        if len(split_line) == 3:
+            if split_line[2] == 'INDI' and 'id' in unit and 'name' in unit and unit['name']['i'] > border:
+                tmp_dict_id = unit['id']
+                units[tmp_dict_id] = { 'name': unit['name']['item'] }
+                if 'sex' in unit and unit['sex']['i'] > border:
+                    units[tmp_dict_id].update({'sex': unit['sex']['item'] })
+                if 'famc' in unit and unit['famc']['i'] > border:
+                    units[tmp_dict_id].update({ 'famc': unit['famc']['item'] })
+                if 'fams' in unit and unit['fams']['i'] > border:
+                    units[tmp_dict_id].update({ 'fams': unit['fams']['item'] })
+                if 'husb' in unit and unit['husb']['i'] > border:
+                    units[tmp_dict_id].update({ 'husb': unit['husb']['item'] })
+                if 'chil' in unit and unit['chil']['i'] > border:
+                    units[tmp_dict_id].update({ 'chil': unit['chil']['item'] })
+                if 'wife' in unit and unit['wife']['i'] > border:
+                    units[tmp_dict_id].update({ 'wife': unit['wife']['item'] })
+                border = i
+                unit = {}
+            elif split_line[1] == 'NAME' and 'id' in unit:
+                unit['name'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'SEX':
+                unit['sex'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'FAMC':
+                unit['famc'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'FAMS':
+                unit['fams'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'HUSB':
+                unit['husb'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'CHIL':
+                unit['chil'] = { 'item': split_line[2], 'i': i }
+            elif split_line[1] == 'WIFE':
+                unit['wife'] = { 'item': split_line[2], 'i': i }
+            elif split_line[2] == 'INDI':
+                unit['id'] = split_line[1]
+    print(units)
 
 
 if __name__ == "__main__":
@@ -124,9 +181,9 @@ if __name__ == "__main__":
         if act == '1':
             gun_line = show_by_time()
             try:
-                while True:
+                while 1:
                     print(next(gun_line))
             except StopIteration:
                 print("  finish")
         if act == '2' or act == '3': show_contains_name(act)
-        # if act == '4': run_proc_prolog()
+        if act == '4': run_proc_prolog()
