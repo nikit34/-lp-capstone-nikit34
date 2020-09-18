@@ -60,25 +60,25 @@ def show_by_time(file_lines, fin, *args, **kwargs):
     for i, line in enumerate(file_lines):
         split_line = line.split(' ', 2)
         if len(split_line) > 2 and split_line[1] == 'DATE':
-            year = ''.join(x for x in str(split_line[2].split()[-1]) if x.isdigit())
+            year = ''.join(x for x in str(split_line[2].strip().split()[-1].lstrip()) if x.isdigit())
             if len(year) > 2 and int(year) > old_year and int(year) < near_year:
                 select_chan = []
                 tmp_lines = []
                 for j, tmp_line in enumerate(file_lines):
                     if j >= i - 3 and j < i:
-                        tmp_lines.append(tmp_line)
+                        tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
                     elif j == i:
-                        tmp_lines.append(tmp_line)
+                        tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
                         if j > 3:
                             k = 3
                         else:
                             k = j
                         while k >= 0 and tmp_line.split(' ', 2)[1] != 'CHAN':
-                            select_chan.append(tmp_lines[k])
+                            select_chan.append(tmp_lines[k].replace('//', '').replace('/-/', '').strip())
                             k -= 1
                     elif j > i:
                         if tmp_line.split(' ', 2)[1] != 'CHAN' and j <= i + 3:
-                            select_chan.append(tmp_line)
+                            select_chan.append(tmp_line.replace('//', '').replace('/-/', '').strip())
                         else:
                             yield select_chan
                             break
