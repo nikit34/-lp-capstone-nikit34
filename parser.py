@@ -7,11 +7,7 @@ def open_close_file(*name_args, **name_kwargs):
             fout = name_kwargs['fout']
         elif 'fin' in name_kwargs.keys():
             fin = name_kwargs['fin']
-            # fout = (name_args)
             fout = None
-        # elif 'fout' in name_kwargs.keys():
-        #     fout = name_kwargs['fout']
-        #     fin = (name_args)
         else:
             print("invalid args of decorator")
     else:
