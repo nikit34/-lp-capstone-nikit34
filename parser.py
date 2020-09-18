@@ -30,13 +30,12 @@ def open_close_file(*name_args, **name_kwargs):
 
 
 def menu():
-    print("1 show by DATE TIME interval    [values]")
-    print("2 show all COUNTRIES            [values]")
+    print("1 show by DATE TIME interval         [values]")
+    print("2 show all occurrences by NAME       [values]")
+    print("3 show all occurrences by NIKNAME    [values]")
     while True:
-        print("input:", end = ' ')
-        act = input()
-        #act = '1'
-        if next(filter(lambda x: x not in ['1', '2'], act), False):
+        act = input('input: ')
+        if next(filter(lambda x: x not in ['1', '2', '3'], act), False):
             print("Invalid input")
         else:
             print(f"{act} - OK")
@@ -95,9 +94,16 @@ def show_by_time(file_lines, *args, **kwargs):
 
 
 @open_close_file(fin=('Ragusan.ged', 'r'), fout=('proc_family.pl', 'wb'))
-def show_countries(file_lines, *args, **kwargs):
-    # for i, line in enumerate(file_lines):
-    pass
+def show_contains_name(file_lines, *args, **kwargs):
+    search = 'NAME'
+    if args[0] == '3': search = 'CONT'
+    name = input(f"  enter {search} for search: ").lower()
+    print("-------------------------------------------------------------")
+    for i, line in enumerate(file_lines):
+        split_line = line.split(' ', 2)
+        if split_line[1] == search and split_line[2].lower().count(name):
+            print(line)
+    print("-------------------------------------------------------------")
 
 
 
@@ -113,4 +119,4 @@ if __name__ == "__main__":
                     print(next(g))
             except StopIteration:
                 print("  finish")
-        if act == '2': show_countries()
+        if act == '2' or act == '3': show_contains_name(act)
