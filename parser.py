@@ -1,5 +1,4 @@
-from functools import reduce
-
+import time
 
 def open_close_file(*name_args, **name_kwargs):
     if len(name_args) == 2 and len(name_kwargs) == 1 or len(name_kwargs) == 2:
@@ -46,6 +45,7 @@ def menu():
 def show_by_time(file_lines, fin, *args, **kwargs):
     near_year = 0
     old_year = 0
+    ts = 0
     while True:
         print("  enter time interval\n  in follow format\n  [one year / 4 symb] [second year / 4 symb]")
         # interval = input().split()
@@ -58,12 +58,15 @@ def show_by_time(file_lines, fin, *args, **kwargs):
             break
         else:
             print("  invalid data format")
-    select_chan = []
     for i, line in enumerate(file_lines):
         split_line = line.split(b' ', 2)
         if len(split_line) > 2 and split_line[1] == b'DATE':
+            t1 = time.perf_counter()
             year = ''.join(x for x in str(split_line[2].split()[-1]) if x.isdigit())
+            t2 = time.perf_counter()
+            ts += t2 - t1
             if len(year) > 2 and int(year) > old_year and int(year) < near_year:
+                select_chan = []
                 tmp_lines = []
                 for j, tmp_line in enumerate(file_lines):
                     if j >= i - 3 and j < i:
@@ -81,7 +84,7 @@ def show_by_time(file_lines, fin, *args, **kwargs):
                         if tmp_line.split(b' ', 2)[1] != b'CHAN' and j <= i + 3:
                             select_chan.append(tmp_line)
                         else:
-                            yield select_chan
+                            yield ts #select_chan
                             break
 
 
@@ -104,5 +107,8 @@ def show_countries():
 #         if act == 2: show_countries()
 
 g = show_by_time()
-for i in range(20):
-    print(next(g))
+gts = 0
+# for i in range(1000):
+    gts += next(g)
+
+print(gts / 1000)
