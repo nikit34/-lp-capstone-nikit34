@@ -36,7 +36,8 @@ def menu():
     print("3 show all occurrences by CONTENT    [values]")
     print("4 start proc search direct parents   [values]")
     while 1:
-        act = input('input: ')
+        # act = input('input: ')
+        act = '4'
         if next(filter(lambda x: x not in ['1', '2', '3', '4'], act), False):
             print("Invalid input")
         else:
@@ -77,19 +78,19 @@ def show_by_time(file_lines, *args, **kwargs):
                     c += 1
                     for j, tmp_line in enumerate(file_lines):
                         if j >= i - 10 and j < i:
-                            tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
+                            tmp_lines.update(tmp_line.replace('//', '').replace('/-/', '').strip())
                         elif j == i:
-                            tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
+                            tmp_lines.update(tmp_line.replace('//', '').replace('/-/', '').strip())
                             if j > 10:
                                 k = 10
                             else:
                                 k = j
                             while k >= 0 and tmp_line.split(' ', 2)[0] != '0':
-                                select_chan.append(tmp_lines[k].replace('//', '').replace('/-/', '').strip())
+                                select_chan.update(tmp_lines[k].replace('//', '').replace('/-/', '').strip())
                                 k -= 1
                         elif j > i:
                             if tmp_line.split(' ', 2)[0] != '0' and j <= i + 10:
-                                select_chan.append(tmp_line.replace('//', '').replace('/-/', '').strip())
+                                select_chan.update(tmp_line.replace('//', '').replace('/-/', '').strip())
                             else:
                                 yield select_chan
                                 break
@@ -110,7 +111,7 @@ def show_contains_name(file_lines, *args, **kwargs):
     print("-------------------------------------------------------------")
 
 
-@open_close_file(fin=('kennedy.ged', 'r'), fout=('prolog.pl', 'w'))
+@open_close_file(fin=('kennedy.ged', 'r'), fout=('prolog.pl', 'w+'))
 def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
     f_prolog.write("parent(X,Y) :- parents(Y,X,_).\n")
     f_prolog.write("parent(X,Y) :- parents(Y,_,X).\n")
@@ -133,26 +134,27 @@ def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
     f_prolog.write("aunt(X,Y) :- sister(X,Z), parent(Z,Y).\n")
     f_prolog.write("uncle(X, Y) :- brother(X, Z), parent(Z,Y).\n")
     unit = {}
-    units = {}
+    units = []
     border = 0
     for i, line in enumerate(file_lines, start=1):
         split_line = [x.strip() for x in line.split(' ', 2)]
         if len(split_line) == 3:
             if split_line[2] == 'INDI' and 'id' in unit and 'name' in unit and unit['name']['i'] > border:
-                tmp_dict_id = unit['id']
-                units[tmp_dict_id] = { 'name': unit['name']['item'] }
+                tmp = { 'id':  unit['id'] }
+                tmp.update({ 'name': unit['name']['item'] })
                 if 'sex' in unit and unit['sex']['i'] > border:
-                    units[tmp_dict_id].update({'sex': unit['sex']['item'] })
+                    tmp.update({'sex': unit['sex']['item'] })
                 if 'famc' in unit and unit['famc']['i'] > border:
-                    units[tmp_dict_id].update({ 'famc': unit['famc']['item'] })
+                    tmp.update({ 'famc': unit['famc']['item'] })
                 if 'fams' in unit and unit['fams']['i'] > border:
-                    units[tmp_dict_id].update({ 'fams': unit['fams']['item'] })
+                    tmp.update({ 'fams': unit['fams']['item'] })
                 if 'husb' in unit and unit['husb']['i'] > border:
-                    units[tmp_dict_id].update({ 'husb': unit['husb']['item'] })
+                    tmp.update({ 'husb': unit['husb']['item'] })
                 if 'chil' in unit and unit['chil']['i'] > border:
-                    units[tmp_dict_id].update({ 'chil': unit['chil']['item'] })
+                    tmp.update({ 'chil': unit['chil']['item'] })
                 if 'wife' in unit and unit['wife']['i'] > border:
-                    units[tmp_dict_id].update({ 'wife': unit['wife']['item'] })
+                    tmp.update({ 'wife': unit['wife']['item'] })
+                units.append(tmp)
                 border = i
                 unit = {}
             elif split_line[1] == 'NAME' and 'id' in unit:
@@ -171,7 +173,25 @@ def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
                 unit['wife'] = { 'item': split_line[2], 'i': i }
             elif split_line[2] == 'INDI':
                 unit['id'] = split_line[1]
-    print(units)
+    # import pprint
+    # pprint.pprint(units)
+    for unit in units:
+        father = []
+        for other in units:
+            if unit['id'] != other['id']:
+                if 'fams' in unit and 'fams' in other:
+                    if unit['fams'] == other['fams']:
+                        if other['sex'] == 'M':
+                            father.append(other)
+                        else:
+                            father.append(unit)
+                if 'fams' in unit and 'famc' in other and len(father) > 0 and father[-1]['id'] != unit['id'] and father[-1]['id'] != other['id']:
+                    if unit['fams'] == other['famc']:
+                        print(f"parents({other['name']}, {father[-1]['name']}, {unit['name']}).")
+                if 'famc' in unit and 'fams' in other and len(father) > 0 and father[-1]['id'] != unit['id'] and father[-1]['id'] != other['id']:
+                    if unit['famc'] == other['fams']:
+                        print(f"parents({unit['name']}, {father[-1]['name']}, {other['name']}).")
+
 
 
 if __name__ == "__main__":
@@ -187,3 +207,4 @@ if __name__ == "__main__":
                 print("  finish")
         if act == '2' or act == '3': show_contains_name(act)
         if act == '4': run_proc_prolog()
+        break #TODO: disable
