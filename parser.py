@@ -1,16 +1,17 @@
 
 
 def open_close_file(*name_args, **name_kwargs):
-    if len(name_args) == 2 and len(name_kwargs) == 1 or len(name_kwargs) == 2:
+    if len(name_kwargs) > 0:
         if 'fin' in name_kwargs.keys() and 'fout' in name_kwargs.keys():
             fin = name_kwargs['fin']
             fout = name_kwargs['fout']
         elif 'fin' in name_kwargs.keys():
             fin = name_kwargs['fin']
-            fout = (name_args)
-        elif 'fout' in name_kwargs.keys():
-            fout = name_kwargs['fout']
-            fin = (name_args)
+            # fout = (name_args)
+            fout = None
+        # elif 'fout' in name_kwargs.keys():
+        #     fout = name_kwargs['fout']
+        #     fin = (name_args)
         else:
             print("invalid args of decorator")
     else:
@@ -19,10 +20,14 @@ def open_close_file(*name_args, **name_kwargs):
     def decorator(func):
         def _file(*args, **kwargs):
             with open(fin[0], fin[1], encoding='utf8', errors='ignore') as f_input:
-                with open(fout[0], fout[1]) as f_prolog:
+                if fout == None:
                     file_lines = f_input.readlines()
                     done = func(file_lines, *args, **kwargs)
-                    f_prolog.close()
+                else:
+                    with open(fout[0], fout[1]) as f_prolog:
+                        file_lines = f_input.readlines()
+                        done = func(file_lines, f_prolog, *args, **kwargs)
+                        f_prolog.close()
                 f_input.close()
             return done
         return _file
@@ -32,7 +37,8 @@ def open_close_file(*name_args, **name_kwargs):
 def menu():
     print("1 show by DATE TIME interval         [values]")
     print("2 show all occurrences by NAME       [values]")
-    print("3 show all occurrences by NIKNAME    [values]")
+    print("3 show all occurrences by CONTENT    [values]")
+    print("4 start proc search direct parents   [values]")
     while True:
         act = input('input: ')
         if next(filter(lambda x: x not in ['1', '2', '3'], act), False):
@@ -41,7 +47,10 @@ def menu():
             print(f"{act} - OK")
             yield act
 
-@open_close_file(fin=('Ragusan.ged', 'r'), fout=('proc_family.pl', 'wb'))
+
+# def gun_by_time():
+
+@open_close_file(fin=('kennedy.ged', 'r'))
 def show_by_time(file_lines, *args, **kwargs):
     near_year = 0
     old_year = 0
@@ -92,11 +101,10 @@ def show_by_time(file_lines, *args, **kwargs):
             break
 
 
-
-@open_close_file(fin=('Ragusan.ged', 'r'), fout=('proc_family.pl', 'wb'))
+@open_close_file(fin=('kennedy.ged', 'r'))
 def show_contains_name(file_lines, *args, **kwargs):
     search = 'NAME'
-    if args[0] == '3': search = 'CONT'
+    if args[len(args) - 1] == '3': search = 'CONT'
     name = input(f"  enter {search} for search: ").lower()
     print("-------------------------------------------------------------")
     for i, line in enumerate(file_lines):
@@ -106,6 +114,11 @@ def show_contains_name(file_lines, *args, **kwargs):
     print("-------------------------------------------------------------")
 
 
+# @open_close_file(fin=('Ragusan.ged', 'r'), fout=('prolog.pl', 'w'))
+# def run_proc_prolog(file_lines, *args, **kwargs):
+#     for i, line in enumerate(file_lines):
+#         split_line = line.split(' ', 2)
+#         if split_line[1] == 'NAME'
 
 
 if __name__ == "__main__":
@@ -113,10 +126,11 @@ if __name__ == "__main__":
     while act != 0:
         act = next(menu())
         if act == '1':
-            g = show_by_time()
+            gun_line = show_by_time()
             try:
                 while True:
-                    print(next(g))
+                    print(next(gun_line))
             except StopIteration:
                 print("  finish")
         if act == '2' or act == '3': show_contains_name(act)
+        # if act == '4': run_proc_prolog()
