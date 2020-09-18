@@ -21,7 +21,8 @@ def open_close_file(*name_args, **name_kwargs):
         def _file(*args, **kwargs):
             with open(fin[0], fin[1]) as f_input:
                 with open(fout[0], fout[1]) as f_prolog:
-                    done = func(f_input, fin, *args, **kwargs)
+                    file_lines = f_input.readlines()
+                    done = func(file_lines, fin, *args, **kwargs)
                     f_prolog.close()
                 f_input.close()
             return done
@@ -42,13 +43,13 @@ def menu():
             yield act
 
 @open_close_file(fin=('royal_gen_20_11_2002.ged', 'rb'), fout=('proc_family.pl', 'wb'))
-def show_by_time(file, fin, *args, **kwargs):
+def show_by_time(file_lines, fin, *args, **kwargs):
     near_year = 0
     old_year = 0
     while True:
         print("  enter time interval\n  in follow format\n  [one year / 4 symb] [second year / 4 symb]")
         # interval = input().split()
-        interval = ['1000', '2003']
+        interval = ['2000', '2003']
         if len(interval) == 2:
             near_year = int(interval[0])
             old_year = int(interval[1])
@@ -58,35 +59,31 @@ def show_by_time(file, fin, *args, **kwargs):
         else:
             print("  invalid data format")
     select_chan = []
-    with open(fin[0], fin[1]) as tmp_file:
-        for i, line in enumerate(file.readlines()):
-            split_line = line.split(b' ', 2)
-            if len(split_line) > 2 and split_line[1] == b'DATE':
-                year = ''.join(x for x in str(split_line[2].split()[-1]) if x.isdigit())
-                if len(year) > 2 and int(year) > old_year and int(year) < near_year:
-                    tmp_lines = []
-                    for j, tmp_line in enumerate(tmp_file.readlines()):
-                        k = 0
-                        if j >= i - 20 and j <= i:
-                            tmp_lines.append(tmp_line)
-                        if j == i:
-                            if j > 20:
-                                k = 20
-                            else:
-                                k = j
-                            while k >= 0 and tmp_lines[k - 1].split(b' ', 2)[1] != b'CHAN':
-                                select_chan.append(tmp_lines[k - 1])
-                                k -= 1
-                        if j > i:
-                            if tmp_line.split(b' ', 2)[1] != b'CHAN' and j <= i + 20:
-                                select_chan.append(tmp_line)
-                            else:
-                                break
-    tmp_file.close()
+    for i, line in enumerate(file_lines):
+        split_line = line.split(b' ', 2)
+        if len(split_line) > 2 and split_line[1] == b'DATE':
+            year = ''.join(x for x in str(split_line[2].split()[-1]) if x.isdigit())
+            if len(year) > 2 and int(year) > old_year and int(year) < near_year:
+                tmp_lines = []
+                for j, tmp_line in enumerate(file_lines):
+                    if j >= i - 3 and j < i:
+                        tmp_lines.append(tmp_line)
+                    elif j == i:
+                        tmp_lines.append(tmp_line)
+                        if j > 3:
+                            k = 3
+                        else:
+                            k = j
+                        while k >= 0 and tmp_line.split(b' ', 2)[1] != b'CHAN':
+                            select_chan.append(tmp_lines[k])
+                            k -= 1
+                    elif j > i:
+                        if tmp_line.split(b' ', 2)[1] != b'CHAN' and j <= i + 3:
+                            select_chan.append(tmp_line)
+                        else:
+                            yield select_chan
+                            break
 
-    for s in select_chan:
-        print(s)
-    # file.write(line)
 
 
 @open_close_file(fin=('royal_gen_20_11_2002.ged', 'rb'), fout=('proc_family.pl', 'wb'))
@@ -106,5 +103,6 @@ def show_countries():
 #         if act == 1: show_by_time()
 #         if act == 2: show_countries()
 
-
-show_by_time()
+g = show_by_time()
+for i in range(20):
+    print(next(g))
