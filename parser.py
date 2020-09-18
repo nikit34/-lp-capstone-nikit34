@@ -1,4 +1,4 @@
-import time
+
 
 def open_close_file(*name_args, **name_kwargs):
     if len(name_args) == 2 and len(name_kwargs) == 1 or len(name_kwargs) == 2:
@@ -18,7 +18,7 @@ def open_close_file(*name_args, **name_kwargs):
 
     def decorator(func):
         def _file(*args, **kwargs):
-            with open(fin[0], fin[1]) as f_input:
+            with open(fin[0], fin[1], encoding='utf8', errors='ignore') as f_input:
                 with open(fout[0], fout[1]) as f_prolog:
                     file_lines = f_input.readlines()
                     done = func(file_lines, fin, *args, **kwargs)
@@ -41,11 +41,10 @@ def menu():
             print(f"{act} - OK")
             yield act
 
-@open_close_file(fin=('royal_gen_20_11_2002.ged', 'rb'), fout=('proc_family.pl', 'wb'))
+@open_close_file(fin=('royal_gen_20_11_2002.ged', 'r'), fout=('proc_family.pl', 'wb'))
 def show_by_time(file_lines, fin, *args, **kwargs):
     near_year = 0
     old_year = 0
-    ts = 0
     while True:
         print("  enter time interval\n  in follow format\n  [one year / 4 symb] [second year / 4 symb]")
         # interval = input().split()
@@ -59,12 +58,9 @@ def show_by_time(file_lines, fin, *args, **kwargs):
         else:
             print("  invalid data format")
     for i, line in enumerate(file_lines):
-        split_line = line.split(b' ', 2)
-        if len(split_line) > 2 and split_line[1] == b'DATE':
-            t1 = time.perf_counter()
+        split_line = line.split(' ', 2)
+        if len(split_line) > 2 and split_line[1] == 'DATE':
             year = ''.join(x for x in str(split_line[2].split()[-1]) if x.isdigit())
-            t2 = time.perf_counter()
-            ts += t2 - t1
             if len(year) > 2 and int(year) > old_year and int(year) < near_year:
                 select_chan = []
                 tmp_lines = []
@@ -77,19 +73,19 @@ def show_by_time(file_lines, fin, *args, **kwargs):
                             k = 3
                         else:
                             k = j
-                        while k >= 0 and tmp_line.split(b' ', 2)[1] != b'CHAN':
+                        while k >= 0 and tmp_line.split(' ', 2)[1] != 'CHAN':
                             select_chan.append(tmp_lines[k])
                             k -= 1
                     elif j > i:
-                        if tmp_line.split(b' ', 2)[1] != b'CHAN' and j <= i + 3:
+                        if tmp_line.split(' ', 2)[1] != 'CHAN' and j <= i + 3:
                             select_chan.append(tmp_line)
                         else:
-                            yield ts #select_chan
+                            yield select_chan
                             break
 
 
 
-@open_close_file(fin=('royal_gen_20_11_2002.ged', 'rb'), fout=('proc_family.pl', 'wb'))
+@open_close_file(fin=('royal_gen_20_11_2002.ged', 'r'), fout=('proc_family.pl', 'wb'))
 def show_countries():
     print("c")
 
@@ -107,8 +103,5 @@ def show_countries():
 #         if act == 2: show_countries()
 
 g = show_by_time()
-gts = 0
-# for i in range(1000):
-    gts += next(g)
-
-print(gts / 1000)
+for i in range(1000):
+    print(next(g))
