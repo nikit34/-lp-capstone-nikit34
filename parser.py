@@ -21,7 +21,7 @@ def open_close_file(*name_args, **name_kwargs):
             with open(fin[0], fin[1], encoding='utf8', errors='ignore') as f_input:
                 with open(fout[0], fout[1]) as f_prolog:
                     file_lines = f_input.readlines()
-                    done = func(file_lines, fin, *args, **kwargs)
+                    done = func(file_lines, *args, **kwargs)
                     f_prolog.close()
                 f_input.close()
             return done
@@ -42,8 +42,8 @@ def menu():
             print(f"{act} - OK")
             yield act
 
-@open_close_file(fin=('royal_gen_20_11_2002.ged', 'r'), fout=('proc_family.pl', 'wb'))
-def show_by_time(file_lines, fin, *args, **kwargs):
+@open_close_file(fin=('Ragusan.ged', 'r'), fout=('proc_family.pl', 'wb'))
+def show_by_time(file_lines, *args, **kwargs):
     near_year = 0
     old_year = 0
     count = -1
@@ -72,19 +72,19 @@ def show_by_time(file_lines, fin, *args, **kwargs):
                     tmp_lines = []
                     c += 1
                     for j, tmp_line in enumerate(file_lines):
-                        if j >= i - 3 and j < i:
+                        if j >= i - 10 and j < i:
                             tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
                         elif j == i:
                             tmp_lines.append(tmp_line.replace('//', '').replace('/-/', '').strip())
-                            if j > 3:
-                                k = 3
+                            if j > 10:
+                                k = 10
                             else:
                                 k = j
-                            while k >= 0 and tmp_line.split(' ', 2)[1] != 'CHAN':
+                            while k >= 0 and tmp_line.split(' ', 2)[0] != '0':
                                 select_chan.append(tmp_lines[k].replace('//', '').replace('/-/', '').strip())
                                 k -= 1
                         elif j > i:
-                            if tmp_line.split(' ', 2)[1] != 'CHAN' and j <= i + 3:
+                            if tmp_line.split(' ', 2)[0] != '0' and j <= i + 10:
                                 select_chan.append(tmp_line.replace('//', '').replace('/-/', '').strip())
                             else:
                                 yield select_chan
@@ -94,12 +94,10 @@ def show_by_time(file_lines, fin, *args, **kwargs):
 
 
 
-@open_close_file(fin=('royal_gen_20_11_2002.ged', 'r'), fout=('proc_family.pl', 'wb'))
-def show_countries():
-    print("c")
-
-
-
+@open_close_file(fin=('Ragusan.ged', 'r'), fout=('proc_family.pl', 'wb'))
+def show_countries(file_lines, *args, **kwargs):
+    # for i, line in enumerate(file_lines):
+    pass
 
 
 
