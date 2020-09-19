@@ -35,10 +35,11 @@ def menu():
     print("2 show all occurrences by NAME       [values]")
     print("3 show all occurrences by CONTENT    [values]")
     print("4 start proc search direct parents   [values]")
-    print("5 exit")
+    print("5 run Prolog")
+    print("6 exit")
     while 1:
         act = input('input: ')
-        if next(filter(lambda x: x not in ['1', '2', '3', '4', '5'], act), False):
+        if next(filter(lambda x: x not in ['1', '2', '3', '4', '5', '6'], act), False):
             print("Invalid input")
         else:
             print(f"{act} - OK")
@@ -254,4 +255,7 @@ if __name__ == "__main__":
                 print("  finish")
         if act == '2' or act == '3': show_contains_name(act)
         if act == '4': run_proc_prolog()
-        if act == '5': quit()
+        if act == '5':
+            import os
+            os.system('swipl -s proc_family.pl')
+        if act == '6': quit()
