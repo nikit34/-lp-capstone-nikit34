@@ -110,8 +110,8 @@ def show_contains_name(file_lines, *args, **kwargs):
             print(line)
     print("-------------------------------------------------------------")
 
-
-@open_close_file(fin=('kennedy.ged', 'r'), fout=('prolog.pl', 'w+'))
+# TODO: w -> a+
+@open_close_file(fin=('kennedy.ged', 'r'), fout=('prolog.pl', 'w'))
 def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
     f_prolog.write("parent(X,Y) :- parents(Y,X,_).\n")
     f_prolog.write("parent(X,Y) :- parents(Y,_,X).\n")
@@ -133,6 +133,7 @@ def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
     f_prolog.write("\n")
     f_prolog.write("aunt(X,Y) :- sister(X,Z), parent(Z,Y).\n")
     f_prolog.write("uncle(X, Y) :- brother(X, Z), parent(Z,Y).\n")
+    f_prolog.write("\n\n\n\n\n\n% approvals\n\n\n")
     unit = {}
     units = []
     border = 0
@@ -161,17 +162,22 @@ def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
         family = {}
         for other in units:
             if unit['id'] != other['id']:
-                if 'famc' in unit and 'fams' in other and unit['famc'] == other['fams']\
+                if 'famc' in unit and 'fams' in other and unit['famc'] == other['fams'] \
                     and 'famc' in other and other['famc'] != other['fams']:
                     if 'sex' in other:
                         if other['sex'] == 'F':
                             family.update({'mother': other})
                         else:
                             family.update({'father': other})
-                    else:
-                        print("1111111111111")
         if len(family) == 2:
-            print(f"parents({unit['name']}, {family['father']['name']}, {family['mother']['name']}).")
+            child = unit['name'].lower().replace(' ', '_')
+            father = family['father']['name'].lower().replace(' ', '_')
+            mother = family['mother']['name'].lower().replace(' ', '_')
+            for warn in [';', '/', '.', ',']:
+                child = child.replace(warn, '')
+                father = father.replace(warn, '')
+                mother = mother.replace(warn, '')
+            f_prolog.write(f"parents({child}, {father}, {mother}).\n")
 
 
 if __name__ == "__main__":
