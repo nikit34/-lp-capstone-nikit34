@@ -1,18 +1,26 @@
 
 
-def open_close_file(*name_args, **name_kwargs):
-    if len(name_kwargs) > 0:
-        if 'fin' in name_kwargs.keys() and 'fout' in name_kwargs.keys():
-            fin = name_kwargs['fin']
-            fout = name_kwargs['fout']
-        elif 'fin' in name_kwargs.keys():
-            fin = name_kwargs['fin']
-            fout = None
+def valid_args(func):
+    def decorator(*name_args, **name_kwargs):
+        if len(name_kwargs) > 0:
+            if 'fin' in name_kwargs.keys() and 'fout' in name_kwargs.keys():
+                fin = name_kwargs['fin']
+                fout = name_kwargs['fout']
+            elif 'fin' in name_kwargs.keys():
+                fin = name_kwargs['fin']
+                fout = None
+            else:
+                print("invalid args of decorator")
         else:
             print("invalid args of decorator")
-    else:
-        print("invalid args of decorator")
+        return func(fin, fout)
+    return decorator
 
+
+@valid_args
+def open_close_file(*args, **kwargs):
+    fin = args[0]
+    fout = args[1]
     def decorator(func):
         def _file(*args, **kwargs):
             with open(fin[0], fin[1], encoding='utf8', errors='ignore') as f_input:
