@@ -142,56 +142,36 @@ def run_proc_prolog(file_lines, f_prolog, *args, **kwargs):
             if split_line[2] == 'INDI' and 'id' in unit and 'name' in unit and unit['name']['i'] > border:
                 tmp = { 'id':  unit['id'] }
                 tmp.update({ 'name': unit['name']['item'] })
-                if 'sex' in unit and unit['sex']['i'] > border:
-                    tmp.update({'sex': unit['sex']['item'] })
-                if 'famc' in unit and unit['famc']['i'] > border:
-                    tmp.update({ 'famc': unit['famc']['item'] })
-                if 'fams' in unit and unit['fams']['i'] > border:
-                    tmp.update({ 'fams': unit['fams']['item'] })
-                if 'husb' in unit and unit['husb']['i'] > border:
-                    tmp.update({ 'husb': unit['husb']['item'] })
-                if 'chil' in unit and unit['chil']['i'] > border:
-                    tmp.update({ 'chil': unit['chil']['item'] })
-                if 'wife' in unit and unit['wife']['i'] > border:
-                    tmp.update({ 'wife': unit['wife']['item'] })
+                for tag in ['sex', 'famc', 'fams', 'husb', 'chil', 'wife']:
+                    if tag in unit and unit[tag]['i'] > border:
+                        tmp.update({ tag: unit[tag]['item'] })
                 units.append(tmp)
                 border = i
                 unit = {}
-            elif split_line[1] == 'NAME' and 'id' in unit:
-                unit['name'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'SEX':
-                unit['sex'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'FAMC':
-                unit['famc'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'FAMS':
-                unit['fams'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'HUSB':
-                unit['husb'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'CHIL':
-                unit['chil'] = { 'item': split_line[2], 'i': i }
-            elif split_line[1] == 'WIFE':
-                unit['wife'] = { 'item': split_line[2], 'i': i }
             elif split_line[2] == 'INDI':
                 unit['id'] = split_line[1]
+            else:
+                for tag in ['NAME', 'SEX', 'FAMC', 'FAMS', 'HUSB', 'CHIL', 'WIFE']:
+                    if split_line[1] == tag:
+                        unit[tag.lower()] = { 'item': split_line[2], 'i': i }
+
     # import pprint
     # pprint.pprint(units)
     for unit in units:
-        father = []
+        family = {}
         for other in units:
             if unit['id'] != other['id']:
-                if 'fams' in unit and 'fams' in other:
-                    if unit['fams'] == other['fams']:
-                        if other['sex'] == 'M':
-                            father.append(other)
+                if 'famc' in unit and 'fams' in other and unit['famc'] == other['fams']\
+                    and 'famc' in other and other['famc'] != other['fams']:
+                    if 'sex' in other:
+                        if other['sex'] == 'F':
+                            family.update({'mother': other})
                         else:
-                            father.append(unit)
-                if 'fams' in unit and 'famc' in other and len(father) > 0 and father[-1]['id'] != unit['id'] and father[-1]['id'] != other['id']:
-                    if unit['fams'] == other['famc']:
-                        print(f"parents({other['name']}, {father[-1]['name']}, {unit['name']}).")
-                if 'famc' in unit and 'fams' in other and len(father) > 0 and father[-1]['id'] != unit['id'] and father[-1]['id'] != other['id']:
-                    if unit['famc'] == other['fams']:
-                        print(f"parents({unit['name']}, {father[-1]['name']}, {other['name']}).")
-
+                            family.update({'father': other})
+                    else:
+                        print("1111111111111")
+        if len(family) == 2:
+            print(f"parents({unit['name']}, {family['father']['name']}, {family['mother']['name']}).")
 
 
 if __name__ == "__main__":
