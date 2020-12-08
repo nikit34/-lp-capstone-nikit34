@@ -46,9 +46,9 @@ result([First, Second|Tail], ResList):-
     ResList = [Relation|Tmp],
     result([Second|Tail], Tmp),!.
 
-prolong([X|Tail],[New,X|Tail]) :- move(X,New), not(member(New,[X|Tail])).
+prolong([X|Tail], [New, X|Tail]) :- move(X, New), not(member(New, [X|Tail])).
 
-width_search(X, Y, Parent) :- width([[X]],Y, L), reverse(L, Parent).
+width_search(X, Y, Parent) :- width([[X]], Y, L), reverse(L, Parent).
 width([[X|T]|_], X, [X|T]).
 width([Parent|T1], X, R) :- findall(Z, prolong(Parent,Z), T), append(T1, T, W), width(W, X, R),!.
 width([_|T], Y, L) :- width(T, Y, L).
