@@ -1,3 +1,5 @@
+% степень родства
+
 cousin(X,Y) :-
 	child(X, Parents),
 	child(Parents, Grandpar),
@@ -37,8 +39,8 @@ chain(X) :- member(X, [father, mother, sister, brother, son, daughter, husband, 
 move(X,Y) :- relationship(_, X, Y).
 
 
-relative_thread(X, Y, Res) :- width_search(X, Y, Res).
-relative(X, Y, Res) :- width_search(X, Y, Res1), !, result(Res1, Res).
+relationship_thread(X, Y, Res) :- width_search(X, Y, Res).
+relationship(X, Y, Res) :- width_search(X, Y, Res1), !, result(Res1, Res).
 
 result([_], []) :- !.
 result([First, Second|Tail], ResList):-
@@ -52,3 +54,38 @@ width_search(X, Y, Parent) :- width([[X]], Y, L), reverse(L, Parent).
 width([[X|T]|_], X, [X|T]).
 width([Parent|T1], X, R) :- findall(Z, prolong(Parent,Z), T), append(T1, T, W), width(W, X, R),!.
 width([_|T], Y, L) :- width(T, Y, L).
+
+
+
+% естественно языковой интерфейс
+
+question(W):- member(W, [who, "Who"]).
+
+is(I):- member(I,[is, "is"]).
+
+symbol_qestion(Q):- member(Q, ['?']).
+
+
+% Пример запроса: [Who, is, *name*, mother, ?]
+ask(List):-
+      List = [Word, Is, Name, Rel, Q],
+      question(Word),
+      is(Is),
+      (male(Name);female(Name)),
+      nb_setval(lastName, N),
+      chain(Rel),
+      symbol_qestion(Q), !,
+      relationship(Rel, Res, Name),
+      write(Res), write(" is "), write(Name), write(Rel).
+
+
+% Пример запроса: [is, *name*, *name*, father, ?]
+ask(List):-
+      List = [Is, Name1, Name2, Rel, Q],
+      nb_setval(lastName, Name2),
+      is(Is),
+      (male(Name1);female(Name1)),
+      (male(Name2);female(Name2)),
+      chain(Rel),
+      symbol_qestion(Q),
+      relationship(Rel, Name1, Name2), !.

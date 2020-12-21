@@ -234,23 +234,38 @@
     aunt(X,Y) :- sister(X,Z), parent(Z,Y).
     uncle(X, Y) :- brother(X, Z), parent(Z,Y).
 
-**Реализация определения степени родства  - Prolog**
+
+
+3) **Реализация предиката проверки / поиска шурина **(брата жены)
+
+Объяснение снизу вверх. 
+
+- Для поиска `uncle` - шурина `X` (брата жены `Y`) необходимо знать о самом брате `x`, его родителе `Z` и сестре `Y` брата (она же жена).
+
+- Для определения брата `X` введем предикаты `male` - он мужчина, у которого есть `father` отец `Z` и у отца есть дочь `Y` - сестра брата (не могут быть одним и тем же `\= `).
+
+- мужчина тот, кто отец т.е. есть ребенок - `father(X, _)`. причем любой (поэтому нижнее подчеркивание)
+
+- 4 строчка - разница между отцом и матерью 
+
+- father - отец `x` имеет ребенка `Y` и жену `__`
+- parent - родитель, является одним из родителей `X` (то есть либо матерью, либо отцом).
+
+```
+parent(X,Y) :- parents(Y,X,_).
+parent(X,Y) :- parents(Y,_,X).
+father(X, Y) :- parents(Y, X, _).
+mother(X, Y) :- parents(Y, _, X).
+male(X) :- father(X, _).
+brother(X, Y) :- male(X), father(Z, X), father(Z, Y), X \= Y.
+uncle(X, Y) :- brother(X, Z), parent(Z,Y).
+```
+
+
+
+4) **Реализация определения степени родства  - Prolog**
 
 Поиск отношений по заданным предикатам и набором правил,  определенных в файле `relationship_kinship.pl`
-
-```
-relationship(father, Fath, Child) :- father(Fath, Child).
-relationship(mother, Moth, Child) :- mother(Moth, Child).
-
-relationship(husband, Husb, Wife) :- child(Child, Husb), child(Child, Wife), Husb \= Wife, male(Husb).
-relationship(wife, Wife, Husb) :- child(Child, Husb), child(Child, Wife), Husb \= Wife, female(Wife).
-relationship(brother, Bro, X) :- brother(X,Bro).
-relationship(sister, Sis, Y) :- sister(Y, Sis).
-relationship(parent, Parent, Child) :- child(Child, Parent).
-relationship(child, Child, Parent) :- child(Child, Parent).
-relationship(son, Child, Parent) :- son(Child, Parent).
-relationship(daughter, Child, Parent) :- daughter(Child, Parent).
-```
 
 Задача определения степени родства в дереве может быть решена поиском 
 
@@ -269,11 +284,25 @@ width([Parent|T1], X, R) :- findall(Z, prolong(Parent,Z), T), append(T1, T, W), 
 width([_|T], Y, L) :- width(T, Y, L).
 ```
 
-Общее число выработанных узлов (временная сложность) равно O(b^(d+1)), где *b* — коэффициент ветвления, *d* — глубина поиска. 
+Общее число выработанных узлов (временная сложность) равно `O(b^(d+1))`, где *b* — коэффициент ветвления (количество прямых потомков в каждом узле. Если коэффициент ветвления равен 3, то от текущей позиции на уровень ниже будет 3 узла, двумя уровнями ниже будет 3 во 2 степени (или 9) узлов) , *d* — глубина поиска.  Использовал для поиска прямых потомков, коэффициент ветвления - 2. Иначе будет шаг через родственника.
 
+```
+relationship(father, Fath, Child) :- father(Fath, Child).
+relationship(mother, Moth, Child) :- mother(Moth, Child).
 
+relationship(husband, Husb, Wife) :- child(Child, Husb), child(Child, Wife), Husb \= Wife, male(Husb).
+relationship(wife, Wife, Husb) :- child(Child, Husb), child(Child, Wife), Husb \= Wife, female(Wife).
+relationship(brother, Bro, X) :- brother(X,Bro).
+relationship(sister, Sis, Y) :- sister(Y, Sis).
+relationship(parent, Parent, Child) :- child(Child, Parent).
+relationship(child, Child, Parent) :- child(Child, Parent).
+relationship(son, Child, Parent) :- son(Child, Parent).
+relationship(daughter, Child, Parent) :- daughter(Child, Parent).
+```
 
-## Естественно-языковый интерфейс
+5) **Естественно-языковый интерфейс***
+
+Реализация написана на Python (интерфейс)
 
     1 show by DATE TIME interval         [values]
     2 show all occurrences by NAME       [values]
@@ -284,9 +313,44 @@ width([_|T], Y, L) :- width(T, Y, L).
     input: 5
     5 - OK
 
+Реализация на Prolog
 
+```% естественно языковой интерфейс
+question(W):- member(W, [who, "Who"]).
+is(I):- member(I,[is, "is"]).
+symbol_qestion(Q):- member(Q, ['?']).
+
+
+% Пример запроса: [Who, is, *name*, mother, ?]
+ask(List):-
+      List = [Word, Is, Name, Rel, Q],
+      question(Word),
+      is(Is),
+      (male(Name);female(Name)),
+      nb_setval(lastName, N),
+      chain(Rel),
+      symbol_qestion(Q), !,
+      relationship(Rel, Res, Name),
+      write(Res), write(" is "), write(Name), write(Rel).
+
+
+% Пример запроса: [is, *name*, *name*, father, ?]
+ask(List):-
+      List = [Is, Name1, Name2, Rel, Q],
+      nb_setval(lastName, Name2),
+      is(Is),
+      (male(Name1);female(Name1)),
+      (male(Name2);female(Name2)),
+      chain(Rel),
+      symbol_qestion(Q),
+      relationship(Rel, Name1, Name2), !.
+```
+
+1. запоминаем ключевые слова для формирования запроса
+2. заменяем их на переменные
+3. nb_setval - устанавливает начальное значение, связывая копию с именем атома, с возможностью возврата
+4. chain - берется определенный предикат из набора выше по коду.
 
 ## Выводы
 
-В процессе выполнения курсового проекта были получены и применены навыки логического и функционального программирования. Использовались декораторы и лямбда выражения для получения информации из файла и регулярные выражения для очистки данных. Курсовой проект содержит построенное и проанализированное родословное дерево. 
-
+В процессе выполнения курсового проекта были получены и применены навыки логического и функционального программирования. Использовались декораторы и лямбда выражения для получения информации из файла и регулярные выражения для очистки данных. Оточены навыки программирования. Осознана и опробована новая парадигма программирования. Установлено навык глубокого понимания абстрактных тем. Курсовой проект содержит построенное и проанализированное родословное дерево. 
